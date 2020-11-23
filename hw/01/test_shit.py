@@ -62,16 +62,21 @@ def nn_interpolation(list_pts_3d, j_nn):
 
     print("File written to", j_nn['output-file'])
 
-
-
-def bbox(point_list, cell_size=1):
+def split_xyz(point_list3d):
     x_list = []
     y_list = []
-    for points in point_list: 
+    z_list = []
+    for points in point_list3d: 
         x = points[0]
         x_list.append(x)
         y = points[1]
         y_list.append(y)
+        z = points[2]
+        z_list.append(z)
+    return x_list, y_list, z_list
+
+def bbox(point_list, cell_size=1):
+    x_list, y_list, _ = split_xyz(point_list)
     
     min_coordinate = (min(x_list), min(y_list))
     max_coordinate = (max(x_list), max(y_list))
@@ -135,9 +140,13 @@ def gridding():
 
 grid = gridding()
 
-#print('grid\n', grid)
+print('grid\n', grid)
 
-x, y = gridding()
-tree = spatial.KDTree(list(zip(x.ravel(), y.ravel())))
+x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
 
-print(tree.data)
+tree = spatial.KDTree(list(zip(x_list_points, y_list_points))
+
+
+
+#for p in 
+distance, points = tree.query(p, k=1)
