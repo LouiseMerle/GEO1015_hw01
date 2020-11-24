@@ -146,12 +146,13 @@ def gridding(bounding_box):
     min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize']) 
     x_axis = numpy.arange(min_coordinate[0], max_coordinate[0] + j_nn['cellsize'], j_nn['cellsize'])
     y_axis = numpy.arange(min_coordinate[1], max_coordinate[1] + j_nn['cellsize'], j_nn['cellsize'])
-    x_grid, y_grid = numpy.meshgrid(x_axis, y_axis, sparse=True)
-    ncols = (max_coordinate[0] - min_coordinate[0]) / j_nn['cellsize'] 
-    nrows = (max_coordinate[1] - min_coordinate[1]) / j_nn['cellsize'] 
-    return x_grid, y_grid, ncols, nrows
+    #x_grid, y_grid = numpy.meshgrid(x_axis, y_axis, sparse=True)
+    return x_axis, y_axis
 
-x_grid, y_grid, ncols, nrows = gridding(bounding_box)
+
+x_axis, y_axis = gridding(bounding_box)
+
+y_flip = numpy.flip(y_axis)
 
 x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
 
@@ -160,29 +161,28 @@ tree = spatial.KDTree(zip_list)
 
 print(tree.data)
 
-min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize']) 
-x_axis = numpy.arange(min_coordinate[0], max_coordinate[0] + j_nn['cellsize'], j_nn['cellsize'])
-y_axis = numpy.arange(min_coordinate[1], max_coordinate[1] + j_nn['cellsize'], j_nn['cellsize'])
-
+z_rast = numpy.zeros((x_axis.shape[0], y_axis.shape[0]))
 
 with open('test.asc', 'w') as fh:
-    fh.write('NCOLS {}\n'.format(ncols))
-    fh.write('NROWS {}\n'.format(nrows))
+    fh.write('NCOLS {}\n'.format(x_axis.shape[0]))
+    fh.write('NROWS {}\n'.format(y_axis.shape[0]))
     fh.write('XLLCORNER {}\n'.format(bounding_box[0][0]))
     fh.write('YLLCORNER {}\n'.format(bounding_box[0][1]))
     fh.write('CELLSIZE {}\n'.format(j_nn['cellsize']))
     fh.write('NODATA_VALUE -9999\n')
 
-    for y_value in numpy.flip(y_axis):
-        #print(y_value)
-        for x_value in x_axis:
-            query_point = (x_value, y_value)
+    for j in range(y_axis.shape[0]):
+        for i in range(x_axis.shape[0]):
+            query_point = (x_axis[i], y_flip[j])
             d, i_nn = tree.query(query_point, k=1)
             z_value = z_list_points[i_nn]
-            fh.write(str(z_value) + ' ')
-        fh.write('\n')
+            z_rast[i][j] = z_value
 
-print(y_grid[0])
+    for line in z_rast:
+        numpy.savetxt(fh, line, fmt='%.2f')
+    
+print("File written to", j_nn['output-file'])
+
 
 
 
@@ -207,4 +207,16 @@ fig = plt.figure()
 ax = fig.gca(projection='3d')
 surf = ax.plot_surface(x_grid, y_grid, z_rast, rstride=1, cstride=1)
 plt.show()
+
+
+
+
+for y_value in numpy.flip(y_axis):
+        z_list = []
+        for x_value in x_axis:
+            query_point = (x_value, y_value)
+            #print(query_point)
+            d, i_nn = tree.query(query_point, k=1)
+            z_value = z_list_points[i_nn]
+            z_list.append(z_value)
 '''
