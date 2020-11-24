@@ -139,18 +139,25 @@ def gridding():
 
     grid = numpy.meshgrid(x_axis, y_axis)
     return grid
-'''
-bounding_box = bbox(list_pts_3d, j_nn['cellsize'])
 
-def gridding(bounding_box):
+
+def gridding():
     min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize']) 
     x_axis = numpy.arange(min_coordinate[0], max_coordinate[0] + j_nn['cellsize'], j_nn['cellsize'])
     y_axis = numpy.arange(min_coordinate[1], max_coordinate[1] + j_nn['cellsize'], j_nn['cellsize'])
     #x_grid, y_grid = numpy.meshgrid(x_axis, y_axis, sparse=True)
     return x_axis, y_axis
+'''
+bounding_box = bbox(list_pts_3d, j_nn['cellsize'])
 
+def gridding():
+    min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize']) 
+    x_axis = numpy.arange(min_coordinate[0], max_coordinate[0], j_nn['cellsize'])
+    y_axis = numpy.arange(min_coordinate[1], max_coordinate[1], j_nn['cellsize'])
+    #x_grid, y_grid = numpy.meshgrid(x_axis, y_axis, sparse=True)
+    return x_axis, y_axis
 
-x_axis, y_axis = gridding(bounding_box)
+x_axis, y_axis = gridding()
 
 y_flip = numpy.flip(y_axis)
 
@@ -179,14 +186,9 @@ with open('test.asc', 'w') as fh:
             z_rast[i][j] = z_value
 
     for line in z_rast:
-        numpy.savetxt(fh, line, fmt='%.2f')
+        numpy.savetxt(fh, line, fmt='%.4f')
     
 print("File written to", j_nn['output-file'])
-
-
-
-
-
 
 
 #z_rast = numpy.zeros_like(x_grid)
