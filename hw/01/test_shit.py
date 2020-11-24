@@ -12,6 +12,8 @@ import numpy
 import scipy.spatial
 import startin 
 
+from matplotlib import pyplot as plt
+
 try:
     jparams = json.load(open('params.json'))
 except:
@@ -122,7 +124,7 @@ kd tree with x and y
 query the tree to get z value for each cell 
 '''
 
-
+'''
 def gridding():
     min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize']) 
     x_axis = []
@@ -137,16 +139,72 @@ def gridding():
 
     grid = numpy.meshgrid(x_axis, y_axis)
     return grid
+'''
+bounding_box = bbox(list_pts_3d, j_nn['cellsize'])
 
-grid = gridding()
+def gridding(bounding_box):
+    min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize']) 
+    x_axis = numpy.arange(min_coordinate[0], max_coordinate[0] + j_nn['cellsize'], j_nn['cellsize'])
+    y_axis = numpy.arange(min_coordinate[1], max_coordinate[1] + j_nn['cellsize'], j_nn['cellsize'])
+    x_grid, y_grid = numpy.meshgrid(x_axis, y_axis, sparse=True)
+    ncols = (max_coordinate[0] - min_coordinate[0]) / j_nn['cellsize'] 
+    nrows = (max_coordinate[1] - min_coordinate[1]) / j_nn['cellsize'] 
+    return x_grid, y_grid, ncols, nrows
 
-print('grid\n', grid)
+x_grid, y_grid, ncols, nrows = gridding(bounding_box)
 
 x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
 
-tree = spatial.KDTree(list(zip(x_list_points, y_list_points))
+zip_list = list(zip(x_list_points, y_list_points))
+tree = spatial.KDTree(zip_list)
+
+print(tree.data)
+
+min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize']) 
+x_axis = numpy.arange(min_coordinate[0], max_coordinate[0] + j_nn['cellsize'], j_nn['cellsize'])
+y_axis = numpy.arange(min_coordinate[1], max_coordinate[1] + j_nn['cellsize'], j_nn['cellsize'])
+
+
+with open('test.asc', 'w') as fh:
+    fh.write('NCOLS {}\n'.format(ncols))
+    fh.write('NROWS {}\n'.format(nrows))
+    fh.write('XLLCORNER {}\n'.format(bounding_box[0][0]))
+    fh.write('YLLCORNER {}\n'.format(bounding_box[0][1]))
+    fh.write('CELLSIZE {}\n'.format(j_nn['cellsize']))
+    fh.write('NODATA_VALUE -9999\n')
+
+    for y_value in numpy.flip(y_axis):
+        #print(y_value)
+        for x_value in x_axis:
+            query_point = (x_value, y_value)
+            d, i_nn = tree.query(query_point, k=1)
+            z_value = z_list_points[i_nn]
+            fh.write(str(z_value) + ' ')
+        fh.write('\n')
+
+print(y_grid[0])
 
 
 
-#for p in 
-distance, points = tree.query(p, k=1)
+
+
+
+#z_rast = numpy.zeros_like(x_grid)
+
+'''
+for j in range(x_grid.shape[0]):
+    print(j)
+    for i in range(x_grid.shape[1]):
+        print(i)
+        query_point = (x_grid[j][i], y_grid[j][i])
+        d, i_nn = tree.query(query_point, k=1)
+        print(i_nn)
+        z_value = z_list_points[i_nn]
+        z_rast[i][j] = z_value
+
+
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+surf = ax.plot_surface(x_grid, y_grid, z_rast, rstride=1, cstride=1)
+plt.show()
+'''
