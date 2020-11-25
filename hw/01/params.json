@@ -1,8 +1,8 @@
 {
-  "input-file": "/Users/louisespekking/Documents/Geomatics/GEO1015/HW01/hw/01/other-samples/switzerland/samples.xyz",
+  "input-file": "samples.xyz",
   "nn": {
     "output-file": "nn.asc",
-    "cellsize": 100
+    "cellsize": 5
   },
   "idw": {
     "output-file": "idw.asc",

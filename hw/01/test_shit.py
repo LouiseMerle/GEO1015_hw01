@@ -1,5 +1,5 @@
 from scipy import spatial
-###
+
 import sys
 import math
 import csv
@@ -10,7 +10,7 @@ import time
 import math
 import numpy
 import scipy.spatial
-import startin 
+#import startin 
 
 from matplotlib import pyplot as plt
 
@@ -42,25 +42,6 @@ print(jparams['nn']['cellsize'])
 j_nn = jparams['nn']
 
 def nn_interpolation(list_pts_3d, j_nn):
-    """
-    !!! TO BE COMPLETED !!!
-     
-    Function that writes the output raster with nearest neighbour interpolation
-     
-    Input:
-        list_pts_3d: the list of the input points (in 3D)
-        j_nn:        the parameters of the input for "nn"
-    Output:
-        returns the value of the area
- 
-    """  
-    # print("cellsize:", j_nn['cellsize'])
-
-    #-- to speed up the nearest neighbour us a kd-tree
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html#scipy.spatial.KDTree
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.query.html#scipy.spatial.KDTree.query
-    # kd = scipy.spatial.KDTree(list_pts)
-    # d, i = kd.query(p, k=1)
 
     print("File written to", j_nn['output-file'])
 
@@ -114,15 +95,8 @@ def bbox(point_list, cell_size=1):
 #min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize'])
 
 #print('min', min_coordinate)
-#print('max', max_coordinate)
+#print('max', max_coordinate) 
 
-'''
-first we make the grid
-
-kd tree with x and y 
-
-query the tree to get z value for each cell 
-'''
 
 '''
 def gridding():
@@ -148,6 +122,7 @@ def gridding():
     #x_grid, y_grid = numpy.meshgrid(x_axis, y_axis, sparse=True)
     return x_axis, y_axis
 '''
+
 bounding_box = bbox(list_pts_3d, j_nn['cellsize'])
 
 def gridding():
@@ -158,7 +133,7 @@ def gridding():
     return x_axis, y_axis
 
 x_axis, y_axis = gridding()
-
+x_flip = numpy.flip(x_axis)
 y_flip = numpy.flip(y_axis)
 
 x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
@@ -180,7 +155,7 @@ with open('test.asc', 'w') as fh:
 
     for j in range(y_axis.shape[0]):
         for i in range(x_axis.shape[0]):
-            query_point = (x_axis[i], y_flip[j])
+            query_point = (x_flip[i], y_axis[j])
             d, i_nn = tree.query(query_point, k=1)
             z_value = z_list_points[i_nn]
             z_rast[i][j] = z_value
@@ -188,7 +163,7 @@ with open('test.asc', 'w') as fh:
     for line in z_rast:
         numpy.savetxt(fh, line, fmt='%.4f')
     
-print("File written to", j_nn['output-file'])
+#print("File written to", j_nn['output-file'])
 
 
 #z_rast = numpy.zeros_like(x_grid)
