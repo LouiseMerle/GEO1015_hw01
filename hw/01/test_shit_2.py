@@ -48,42 +48,48 @@ def split_xyz(point_list3d):
 
 x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
 
-ncols = int((max(x_list_points)-min(x_list_points))/j_nn['cellsize'])
-nrows = int((max(y_list_points)-min(y_list_points))/j_nn['cellsize'])
+ncols = math.ceil((max(x_list_points)-min(x_list_points))/j_nn['cellsize'])
+nrows = math.ceil((max(y_list_points)-min(y_list_points))/j_nn['cellsize'])
 
 x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
 
-yrange = reversed(range(int(min(y_list_points) + (0.5 * j_nn['cellsize'])), int(max(y_list_points) + (1.5 * j_nn['cellsize'])), j_nn['cellsize']))
-xrange = (range(int(min(x_list_points)+ (0.5 * j_nn['cellsize'])), int(max(x_list_points) + (1.5 * j_nn['cellsize'])), j_nn['cellsize']))
+yrange = reversed(range(int(min(y_list_points) + (0.5 * j_nn['cellsize'])), int(max(y_list_points) + (0.5 * j_nn['cellsize'])), j_nn['cellsize']))
+xrange = (range(int(min(x_list_points)+ (0.5 * j_nn['cellsize'])), int(max(x_list_points) + (0.5 * j_nn['cellsize'])), j_nn['cellsize']))
 
 coordinates = [[i, j] for j in yrange for i in xrange]
+print('coordinates len', len(coordinates))
+print('ncols', ncols)
+print('nrows', nrows)
 
 zip_list = list(zip(x_list_points, y_list_points))
 tree = spatial.KDTree(zip_list)
 
-z_rast = numpy.zeros((ncols, nrows))
+z_rast = numpy.zeros((ncols+1, nrows))
 #z_val_list= []
 
 with open('test.asc', 'w') as fh:
     fh.write('NCOLS {}\n'.format(ncols))
     fh.write('NROWS {}\n'.format(nrows))
-    fh.write('XLLCORNER {}\n'.format(min(x_list_points), min(y_list_points)))
-    fh.write('YLLCORNER {}\n'.format(max(x_list_points), max(y_list_points)))
+    fh.write('XLLCENTER {}\n'.format(min(x_list_points), min(y_list_points)))
+    fh.write('YLLCENTER {}\n'.format(max(x_list_points), max(y_list_points)))
     fh.write('CELLSIZE {}\n'.format(j_nn['cellsize']))
     fh.write('NODATA_VALUE -9999\n')
 
-    i = 0 
+    row_count = 0
+    col_count = 0
+    i = 1
     for query_point in coordinates:
+        #print(col_count, row_count)
         d, i_nn = tree.query(query_point, k=1)
         z_value = z_list_points[i_nn]
-        fh.write(str(z_value) + ' ')
+        z_rast[row_count][col_count] = z_value
+        col_count += 1
 
-        i += 1 
-        if i == ncols:
-            fh.write('\n')
-            i = 0
+        if col_count == ncols:
+            #fh.write('\n')
+            col_count = 1
+            row_count += 1
 
             #z_val_list.append(z_value)
             #z_array = numpy.array(z_val_list)
-    
-    #numpy.savetxt(fh, z_array, fmt='%.4f')
+    numpy.savetxt(fh, z_rast, fmt='%.4f')
