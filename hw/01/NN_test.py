@@ -54,7 +54,7 @@ def main():
         d, i_nn = kd.query(i,k=1)
         i.append(z[i_nn])
     #print(coordinates)
-    with open('Tasmania.asc', 'w') as fh:
+    with open('Swiss.asc', 'w') as fh:
         fh.writelines('NCOLS {}\n'.format(ncols))
         fh.writelines('NROWS {}\n'.format(nrows))
         fh.writelines('XLLCENTER {}\n'.format(min(x)))
