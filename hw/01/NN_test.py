@@ -10,6 +10,19 @@ import copy
 
 
 
+def split_xyz(point_list3d):
+    x_list = []
+    y_list = []
+    z_list = []
+    for points in point_list3d: 
+        x = points[0]
+        x_list.append(x)
+        y = points[1]
+        y_list.append(y)
+        z = points[2]
+        z_list.append(z)
+    return x_list, y_list, z_list
+
 def main():
     #-- read the needed parameters from the file 'params.json' (must be in same folder)
     try:
@@ -20,49 +33,59 @@ def main():
     #-- store the input 3D points in list
     list_pts_3d = []
     with open(jparams['input-file']) as csvfile:
+        j_nn = jparams['nn']
         r = csv.reader(csvfile, delimiter=' ')
         header = next(r)
         for line in r:
             p = list(map(float, line)) #-- convert each str to a float
             assert(len(p) == 3)
             list_pts_3d.append(p)
-    gridsize= jparams['nn']['cellsize']
-    list_pts = copy.copy(list_pts_3d)
-    x = []
-    y = []
-    z = []
-    sample_size = 0
-    for point in list_pts_3d:
-        x.append(point[0])
-        y.append(point[1])
-        z.append(point[2])
-        sample_size += 1 
-    for pt in list_pts:
-        pt.pop(2)
-    kd = scipy.spatial.KDTree(list_pts)
-    ncols = math.ceil((max(x)-min(x) + (0.5 * gridsize))/gridsize)
-    nrows = math.ceil((max(y)-min(y) + (0.5 * gridsize))/gridsize)
-    print(sample_size)
+
+    # get cellsize from j_params file 
+    cellsize= j_nn['cellsize']
+   
+    # split the list of 3d sample points in lists for x, y and z 
+    x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
+
+    # create the KDTree with the x and y values of the sample points 
+    zip_list = list(zip(x_list_points, y_list_points))
+    tree = scipy.spatial.KDTree(zip_list) 
+
+    # calcalute number of rows and colums to wtrite in the asc file
+    ncols = math.ceil((max(x_list_points)-min(x_list_points) + (0.5 * cellsize))/cellsize)
+    nrows = math.ceil((max(y_list_points)-min(y_list_points) + (0.5 * cellsize))/cellsize)
     
-    yrange = reversed(range((int(min(y))),(int(max(y))+(gridsize)),gridsize))
-    xrange = (range(int(min(x)),int(max(x)+(gridsize)),gridsize))
+    # make x and y ranges for the x and y axes for the bbox
+    # add 1 cellsize ??????
+    range_y = reversed(range((int(min(y_list_points))),(int(max(y_list_points))+(cellsize)),cellsize))
+    range_x = (range(int(min(x_list_points)),int(max(x_list_points)+(cellsize)),cellsize))
     
-    coordinates = [[i, j] for j in yrange for i in xrange]
-    
-    #print(coordinates)
-    for i in coordinates:
-        d, i_nn = kd.query(i,k=1)
-        i.append(z[i_nn])
-    #print(coordinates)
+    # make list with all x y coordinates on the x and y axis of the raster
+    coordinate_lst = [[x, y] for y in range_y for x in range_x]
+
+    # query the raster coordinates with the sample points 
+    for i in coordinate_lst:
+        d, i_nn = tree.query(i,k=1)
+        i.append(z_list_points[i_nn])
+
+    row_nr = 0
+    col_nr = 0
     with open('Swiss.asc', 'w') as fh:
         fh.writelines('NCOLS {}\n'.format(ncols))
         fh.writelines('NROWS {}\n'.format(nrows))
-        fh.writelines('XLLCENTER {}\n'.format(min(x)))
-        fh.writelines('YLLCENTER {}\n'.format(min(y)))
-        fh.writelines('CELLSIZE {}\n'.format(jparams['nn']['cellsize']))
-        fh.writelines('NO_DATA VALUE {}\n'.format(-9999))
-        for i in coordinates:
+        fh.writelines('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))
+        fh.writelines('YLLCENTER {}\n'.format(min(y_list_points) + (0.5 * cellsize)))
+        fh.writelines('CELLSIZE {}\n'.format(j_nn['cellsize']))
+        fh.writelines('NO_DATA VALUE -9999\n')
+        
+        for i in coordinate_lst:
             fh.write(str(i[-1])+' ')
-
+            col_nr += 1
+        
+        if col_nr == ncols:
+            col_nr = 0
+            row_nr += 1
+            fh.write('\n')
+        
 if __name__ == '__main__':
     main()

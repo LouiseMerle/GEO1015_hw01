@@ -13,77 +13,11 @@ import scipy.spatial
 import startin 
 #-----
 
-def split_xyz(point_list3d):
-    # split the list of 3d points in lists for x and y and z
-    x_list = []
-    y_list = []
-    z_list = []
-    for points in point_list3d: 
-        x = points[0]
-        x_list.append(x)
-        y = points[1]
-        y_list.append(y)
-        z = points[2]
-        z_list.append(z)
-    return x_list, y_list, z_list
-
-def bbox(point_list, cell_size=1):
-    # split the list of 3d points in lists for x and y 
-    x_list, y_list, _ = split_xyz(point_list)
-
-    # find the lower left and upper right coordinate
-    min_coordinate = (min(x_list), min(y_list))
-    max_coordinate = (max(x_list), max(y_list))
-
-    # find height and widht of the bbox
-    height_bb = max_coordinate[1] - min_coordinate[1]
-    width_bb = max_coordinate[0] - min_coordinate[0]
-
-    # create bbox if square
-    if height_bb % cell_size == 0 and width_bb % cell_size == 0:
-        return min_coordinate, max_coordinate
-    #create bbox when width does not fit cell size 
-    elif height_bb % cell_size == 0 and width_bb % cell_size != 0:
-        num_cells_x = max_coordinate[0] // cell_size
-        new_width = (num_cells_x + 1) * cell_size 
-        new_max_x = min_coordinate[0] + new_width
-        max_coordinate_new = (new_max_x, max_coordinate[1])
-        return min_coordinate, max_coordinate_new
-    #create bbox when height does not fit cell size 
-    elif height_bb % cell_size != 0 and width_bb % cell_size == 0:
-        num_cells_y = max_coordinate[1] // cell_size
-        new_width = (num_cells_y + 1) * cell_size 
-        new_max_y = min_coordinate[1] + new_width
-        max_coordinate_new = (max_coordinate, new_max_y)
-        return min_coordinate, max_coordinate_new
-    #create bbox when width and height do not fit cell size 
-    else: 
-        num_cells_x = max_coordinate[0] // cell_size
-        new_width = (num_cells_x + 1) * cell_size 
-        new_max_x = min_coordinate[0] + new_width
-        num_cells_y = max_coordinate[1] // cell_size
-        new_width = (num_cells_y + 1) * cell_size 
-        new_max_y = min_coordinate[1] + new_width
-        max_coordinate_new = (new_max_x, new_max_y)
-        return min_coordinate, max_coordinate_new
-
-def gridding():
-    # find the lower left and upper right coordinate of the bbox
-    min_coordinate, max_coordinate = bbox(list_pts_3d, j_nn['cellsize']) 
-    x_axis = []
-    y_axis = []
-    # find values for the x-axis 
-    for i in numpy.arange(min_coordinate[0], max_coordinate[0] + j_nn['cellsize'], j_nn['cellsize']):
-        if i <= max_coordinate[0]:
-            x_axis.append(i)
-    # find values for the x-axis 
-    for i in numpy.arange(min_coordinate[1], max_coordinate[1] + j_nn['cellsize'], j_nn['cellsize']):
-        if i <= max_coordinate[1]:
-            y_axis.append(i)
-    
-    #create a grid with points at every cell 
-    grid = numpy.meshgrid(x_axis, y_axis)
-    return grid
+def split_xyz(point_list3d): 
+    x = [point[0] for point in point_list3d]
+    y = [point[1] for point in point_list3d]
+    z = [point[2] for point in point_list3d]
+    return x, y, z
 
 def nn_interpolation(list_pts_3d, j_nn):
     """
@@ -106,9 +40,59 @@ def nn_interpolation(list_pts_3d, j_nn):
     # kd = scipy.spatial.KDTree(list_pts)
     # d, i = kd.query(p, k=1)
 
+        # get cellsize from j_params file 
+    cellsize= j_nn['cellsize']
+   
+    # split the list of 3d sample points in lists for x, y and z 
+    x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
+
+    # create the KDTree with the x and y values of the sample points 
+    zip_list = list(zip(x_list_points, y_list_points))
+    tree = scipy.spatial.KDTree(zip_list) 
+
+    # calcalute number of rows and colums to wtrite in the asc file
+    ncols = math.ceil((max(x_list_points)-min(x_list_points) + (0.5 * cellsize))/cellsize)
+    nrows = math.ceil((max(y_list_points)-min(y_list_points) + (0.5 * cellsize))/cellsize)
+    
+    # make x and y ranges for the x and y axes for the bbox
+    # add 1 cellsize ??????
+    range_y = reversed(range((int(min(y_list_points))),(int(max(y_list_points))+(cellsize)),cellsize))
+    range_x = (range(int(min(x_list_points)),int(max(x_list_points)+(cellsize)),cellsize))
+    
+    # make list with all x y coordinates on the x and y axis of the raster
+    coordinate_lst = [[x, y] for y in range_y for x in range_x]
+
+    # query the raster coordinates with the sample points 
+    # append interpolated z value to list with x, y raster coordinates
+    for query_point in coordinate_lst:
+        d, i_nn = tree.query(query_point, k=1)
+        query_point.append(z_list_points[i_nn])
+
+    # count row and column numbers to write row by row in asc file 
+    row_nr = 0
+    col_nr = 0
+
+    # open asc output file and write 
+    with open(j_nn['output-file'], 'w') as fh:
+        fh.writelines('NCOLS {}\n'.format(ncols))
+        fh.writelines('NROWS {}\n'.format(nrows))
+        fh.writelines('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))
+        fh.writelines('YLLCENTER {}\n'.format(min(y_list_points) + (0.5 * cellsize)))
+        fh.writelines('CELLSIZE {}\n'.format(j_nn['cellsize']))
+        fh.writelines('NO_DATA VALUE -9999\n')
+        
+        # write z values in asc file 
+        for point in coordinate_lst:
+            fh.write(str(point[-1])+' ')
+            col_nr += 1
+        
+        # print new line charater when nr of colls is reached and row is full
+        if col_nr == ncols:
+            col_nr = 0
+            row_nr += 1
+            fh.write('\n')
+
     print("File written to", j_nn['output-file'])
-
-
 
 def idw_interpolation(list_pts_3d, j_idw):
     """
