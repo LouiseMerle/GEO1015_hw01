@@ -74,19 +74,18 @@ def nn_interpolation(list_pts_3d, j_nn):
             d, i_nn = tree.query(query_point,k=1)
             query_point.append(z_list_points[i_nn])
 
-
     # count row and column numbers to write row by row in asc file 
     row_nr = 0
     col_nr = 0
 
     # open asc output file and write 
     with open(j_nn['output-file'], 'w') as fh:
-        fh.writelines('NCOLS {}\n'.format(ncols))
-        fh.writelines('NROWS {}\n'.format(nrows))
-        fh.writelines('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))
-        fh.writelines('YLLCENTER {}\n'.format(min(y_list_points) + (0.5 * cellsize)))
-        fh.writelines('CELLSIZE {}\n'.format(j_nn['cellsize']))
-        fh.writelines('NO_DATA VALUE -9999\n')
+        fh.write('NCOLS {}\n'.format(ncols))
+        fh.write('NROWS {}\n'.format(nrows))
+        fh.write('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))
+        fh.write('YLLCENTER {}\n'.format(min(y_list_points) + (0.5 * cellsize)))
+        fh.write('CELLSIZE {}\n'.format(j_nn['cellsize']))
+        fh.write('NO_DATA VALUE -9999\n')
         
         # write z values in asc file 
         for point in coordinate_lst:
