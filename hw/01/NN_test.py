@@ -1,4 +1,4 @@
-import numpy as np
+import numpy
 import scipy.spatial
 import sys
 import math
@@ -51,14 +51,17 @@ def main():
     zip_list = list(zip(x_list_points, y_list_points))
     tree = scipy.spatial.KDTree(zip_list) 
 
+    # create convex hull
+    hull = scipy.spatial.ConvexHull(zip_list)
+
     # calcalute number of rows and colums to wtrite in the asc file
-    ncols = math.ceil((max(x_list_points)-min(x_list_points) + (0.5 * cellsize))/cellsize)
-    nrows = math.ceil((max(y_list_points)-min(y_list_points) + (0.5 * cellsize))/cellsize)
+    ncols = math.ceil((max(x_list_points)-min(x_list_points))/cellsize)
+    nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
     
     # make x and y ranges for the x and y axes for the bbox
     # add 1 cellsize ??????
-    range_y = reversed(range((int(min(y_list_points))),(int(max(y_list_points))+(cellsize)),cellsize))
-    range_x = (range(int(min(x_list_points)),int(max(x_list_points)+(cellsize)),cellsize))
+    range_y = reversed(numpy.arange(min(y_list_points) + 0.5 * cellsize, max(y_list_points)+ 0.5 * cellsize, cellsize)) 
+    range_x = numpy.arange(min(x_list_points) + 0.5 * cellsize, max(x_list_points)+ 0.5 * cellsize, cellsize)
     
     # make list with all x y coordinates on the x and y axis of the raster
     coordinate_lst = [[x, y] for y in range_y for x in range_x]
@@ -82,10 +85,10 @@ def main():
             fh.write(str(i[-1])+' ')
             col_nr += 1
         
-        if col_nr == ncols:
-            col_nr = 0
-            row_nr += 1
-            fh.write('\n')
+            if col_nr == ncols:
+                col_nr = 0
+                row_nr += 1
+                fh.write('\n')
         
 if __name__ == '__main__':
     main()
