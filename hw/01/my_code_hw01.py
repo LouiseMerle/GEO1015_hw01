@@ -51,22 +51,29 @@ def nn_interpolation(list_pts_3d, j_nn):
     tree = scipy.spatial.KDTree(zip_list) 
 
     # calcalute number of rows and colums to wtrite in the asc file
-    ncols = math.ceil((max(x_list_points)-min(x_list_points) + (0.5 * cellsize))/cellsize)
-    nrows = math.ceil((max(y_list_points)-min(y_list_points) + (0.5 * cellsize))/cellsize)
+    ncols = math.ceil((max(x_list_points)-min(x_list_points))/cellsize)
+    nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
     
     # make x and y ranges for the x and y axes for the bbox
-    # add 1 cellsize ??????
-    range_y = reversed(numpy.arange((int(min(y_list_points))),(int(max(y_list_points))+cellsize),cellsize))
-    range_x = numpy.arange(int(min(x_list_points)),int(max(x_list_points)+cellsize),cellsize)
+    # add 0.5 cellsize to find the centre points of the 
+    range_y = reversed(numpy.arange(min(y_list_points) + 0.5 * cellsize, max(y_list_points)+ 0.5 * cellsize, cellsize)) 
+    range_x = numpy.arange(min(x_list_points) + 0.5 * cellsize, max(x_list_points)+ 0.5 * cellsize, cellsize)
     
     # make list with all x y coordinates on the x and y axis of the raster
     coordinate_lst = [[x, y] for y in range_y for x in range_x]
+    
+    # convex hull
+    hull = scipy.spatial.Delaunay(zip_list)
 
     # query the raster coordinates with the sample points 
     # append interpolated z value to list with x, y raster coordinates
     for query_point in coordinate_lst:
-        d, i_nn = tree.query(query_point, k=1)
-        query_point.append(z_list_points[i_nn])
+        if hull.find_simplex(query_point) == -1:
+            query_point.append(-9999)
+        else:
+            d, i_nn = tree.query(query_point,k=1)
+            query_point.append(z_list_points[i_nn])
+
 
     # count row and column numbers to write row by row in asc file 
     row_nr = 0
