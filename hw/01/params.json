@@ -1,5 +1,5 @@
 {
-  "input-file": "samples_swiss.xyz",
+  "input-file": "samples.xyz",
   "nn": {
     "output-file": "nn.asc",
     "cellsize": 500
