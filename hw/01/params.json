@@ -1,8 +1,8 @@
 {
   "input-file": "samples.xyz",
   "nn": {
-    "output-file": "nn.asc",
-    "cellsize": 1000
+    "output-file": "nn2.asc",
+    "cellsize": 10
   },
   "idw": {
     "output-file": "idw.asc",
@@ -12,7 +12,7 @@
   },
   "tin": {
     "output-file": "tin.asc",
-    "cellsize": 1.0
+    "cellsize": 1
   },
   "kriging": {
     "output-file": "kriging.asc",
