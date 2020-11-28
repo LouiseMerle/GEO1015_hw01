@@ -83,9 +83,9 @@ def main():
             raster_point.append(-9999)
         else: 
             # find point on raster with index of vertices
-            p1 = coordinate_lst[vertices[0]]
-            p2 = coordinate_lst[vertices[1]]
-            p3 = coordinate_lst[vertices[2]]
+            p1 = xy_list[vertices[0]]
+            p2 = xy_list[vertices[1]]
+            p3 = xy_list[vertices[2]]
 
             # test if vertex is the raster point
             if distance(p1, raster_point) == 0:
@@ -114,7 +114,7 @@ def main():
     col_nr = 0
 
     # open asc output file and write 
-    with open('test_tin.asc', 'w') as fh:
+    with open('test_tin_swiss.asc', 'w') as fh:
         fh.write('NCOLS {}\n'.format(ncols))
         fh.write('NROWS {}\n'.format(nrows))
         fh.write('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))
@@ -135,3 +135,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    print('written file')
