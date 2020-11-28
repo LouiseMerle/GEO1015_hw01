@@ -78,18 +78,12 @@ def main():
             w_i = 1/d ** p
             weight_list.append(w_i)
         
-        #if sum(weight_list) == 'inf':
-            #return -9999
-        
         point_list = []
         for i in i_idw:
             point_list.append(z_list_points[i])
         s = 0
         for num1, num2 in zip(weight_list, point_list):
             s += num1 * num2
-        
-        if s/sum(weight_list) == 'inf':
-            return -9999
 
         return(s/sum(weight_list))
         

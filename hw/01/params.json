@@ -1,12 +1,12 @@
 {
-  "input-file": "samples.xyz",
+  "input-file": "samples_swiss.xyz",
   "nn": {
     "output-file": "nn2.asc",
     "cellsize": 10
   },
   "idw": {
     "output-file": "idw.asc",
-    "cellsize": 10.0,
+    "cellsize": 100.0,
     "radius": 20,
     "power": 2
   },
