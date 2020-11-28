@@ -98,15 +98,15 @@ def main():
 
     # query the raster coordinates with the sample points 
     # append interpolated z value to list with x, y raster coordinates
-    for i in coordinate_lst:
+    for query_point in coordinate_lst:
         if hull.find_simplex(query_point) == -1:
             query_point.append(-9999)
         else:
-            raster_values.append(cellvalue_idw(i, radius, power))
+            raster_values.append(cellvalue_idw(query_point, radius, power))
         
     row_nr = 0
     col_nr = 0
-    with open('sample_idw.asc', 'w') as fh:
+    with open('idw_tasmania.asc', 'w') as fh:
         fh.writelines('NCOLS {}\n'.format(ncols))
         fh.writelines('NROWS {}\n'.format(nrows))
         fh.writelines('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))
@@ -125,4 +125,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
+    print('done')

@@ -13,20 +13,25 @@ import scipy.spatial
 import startin 
 #-----
 
+# split 3d points list in separate lists for x y and z
 def split_xyz(point_list3d): 
     x = [point[0] for point in point_list3d]
     y = [point[1] for point in point_list3d]
     z = [point[2] for point in point_list3d]
     return x, y, z
 
+# function to calculate the distance between a sample and a raster point
 def distance(point_sample, point_raster):
     dx = point_sample[0] - point_raster[0]
     dy = point_sample[1] - point_raster[1]
     distance = math.sqrt(dx ** 2 + dy ** 2)
     return distance
 
-def cellvalue_idw (raster_point, r, p, kd_tree, zip_list):               # point is centerpoint of cell
-        i_idw = kd_tree.query_ball_point(raster_point, r)        # i_idw list of indicies with points within radius
+def cellvalue_idw(raster_point, r, p, kd_tree, zip_list, z_list_points):               
+    # raster point is centerpoint of cell
+        
+        # i_idw list of indicies with points within radius
+        i_idw = kd_tree.query_ball_point(raster_point, r)       
 
         if len(i_idw) == 0:
             return -9999
@@ -186,11 +191,11 @@ def idw_interpolation(list_pts_3d, j_idw):
         if hull.find_simplex(point) == -1:
             point.append(-9999)
         else:
-            raster_values.append(cellvalue_idw(point, radius, power, tree, xy_list))
+            raster_values.append(cellvalue_idw(point, radius, power, tree, xy_list, z_list_points))
         
     row_nr = 0
     col_nr = 0
-    with open('sample_idw.asc', 'w') as fh:
+    with open(j_idw['output-file'], 'w') as fh:
         fh.writelines('NCOLS {}\n'.format(ncols))
         fh.writelines('NROWS {}\n'.format(nrows))
         fh.writelines('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))

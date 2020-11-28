@@ -7,7 +7,7 @@
   "idw": {
     "output-file": "idw_tas.asc",
     "cellsize": 100.0,
-    "radius": 200,
+    "radius": 400,
     "power": 2
   },
   "tin": {
