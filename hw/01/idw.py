@@ -45,7 +45,6 @@ def main():
     radius = j_idw['radius']
     power = j_idw['power']
 
-
     x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
     
     zip_list = list(zip(x_list_points, y_list_points))
@@ -66,37 +65,44 @@ def main():
     def distance (p1, p2):
         return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
 
-    def cellvalue_idw (point, r, p):               # point is centerpoint of cell
-        i_idw = tree.query_ball_point(point, r)        # i_idw list of indicies with points within radius
+    def cellvalue_idw (raster_point, r, p):               # point is centerpoint of cell
+        i_idw = tree.query_ball_point(raster_point, r)        # i_idw list of indicies with points within radius
 
         if len(i_idw) == 0:
             return -9999
 
         weight_list = []
         for i in i_idw:
-            d = distance(point, zip_list[i])
-            w_i = 1/d ** p
-            weight_list.append(w_i)
-        
-        #if sum(weight_list) == 'inf':
-            #return -9999
+            if distance(zip_list[i], raster_point) == 0:
+                z_value = z_list_points[i]
+                return z_value
+            else:
+                d = distance(raster_point, zip_list[i])
+                w_i = 1/d ** p
+                weight_list.append(w_i)
         
         point_list = []
         for i in i_idw:
             point_list.append(z_list_points[i])
+
         s = 0
         for num1, num2 in zip(weight_list, point_list):
             s += num1 * num2
-        
-        if s/sum(weight_list) == 'inf':
-            return -9999
 
         return(s/sum(weight_list))
         
     raster_values = []
 
+    # convex hull
+    hull = scipy.spatial.Delaunay(zip_list)
+
+    # query the raster coordinates with the sample points 
+    # append interpolated z value to list with x, y raster coordinates
     for i in coordinate_lst:
-        raster_values.append(cellvalue_idw(i, radius, power))
+        if hull.find_simplex(query_point) == -1:
+            query_point.append(-9999)
+        else:
+            raster_values.append(cellvalue_idw(i, radius, power))
         
     row_nr = 0
     col_nr = 0
@@ -106,7 +112,7 @@ def main():
         fh.writelines('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))
         fh.writelines('YLLCENTER {}\n'.format(min(y_list_points) + (0.5 * cellsize)))
         fh.writelines('CELLSIZE {}\n'.format(j_idw['cellsize']))
-        fh.writelines('NO_DATA VALUE -9999\n')
+        fh.writelines('NODATA_VALUE {}\n'.format(-9999))
         
         for i in raster_values:
             fh.write(str(i)+' ')
