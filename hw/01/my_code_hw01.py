@@ -77,8 +77,8 @@ def nn_interpolation(list_pts_3d, j_nn):
     # kd = scipy.spatial.KDTree(list_pts)
     # d, i = kd.query(p, k=1)
 
-        # get cellsize from j_params file 
-    cellsize= j_nn['cellsize']
+    # get cellsize from j_params file 
+    cellsize = j_nn['cellsize']
    
     # split the list of 3d sample points in lists for x, y and z 
     x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
@@ -191,7 +191,7 @@ def idw_interpolation(list_pts_3d, j_idw):
         if hull.find_simplex(point) == -1:
             point.append(-9999)
         else:
-            raster_values.append(cellvalue_idw(point, radius, power, tree, xy_list, z_list_points))
+            point.append(cellvalue_idw(point, radius, power, tree, xy_list, z_list_points))
         
     row_nr = 0
     col_nr = 0
@@ -203,14 +203,15 @@ def idw_interpolation(list_pts_3d, j_idw):
         fh.writelines('CELLSIZE {}\n'.format(j_idw['cellsize']))
         fh.writelines('NODATA_VALUE {}\n'.format(-9999))
         
-        for i in raster_values:
-            fh.write(str(i)+' ')
+        for point in coordinate_lst:
+            fh.write(str(point[-1])+' ')
             col_nr += 1
         
             if col_nr == ncols:
                 col_nr = 0
                 row_nr += 1
                 fh.write('\n')
+
     print("File written to", j_idw['output-file'])
 
 
