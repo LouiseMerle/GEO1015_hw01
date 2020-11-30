@@ -1,5 +1,13 @@
+### just here ###
+import sys
+import csv
+import json
+#################
+
 import math
 import numpy
+import scipy.spatial
+import startin
 
 cellsize = 2.0
 x_list_points = [2.0, 3.8, 11.5, 8.9, 7.6, 6.1, 4.4, 10.7]
@@ -17,45 +25,30 @@ for i in id_list:
 s = 0
 for num1, num2 in zip(weight_list, point_list):
 	s += num1 * num2
-    
-print (s)
-#print(sum(products))
 
 
+# function to calculate the distance between a sample and a raster point
+def distance(point_sample, point_raster):
+    dx = point_sample[0] - point_raster[0]
+    dy = point_sample[1] - point_raster[1]
+    distance = math.sqrt(dx ** 2 + dy ** 2)
+    return distance
+
+# theoretical variogram (gaussian)
+def variogram(distance):
+    return 2 + 1400*(1.0 - math.exp(-9.0 * distance * distance / (300*300)))
+    # nugget_gaussian+sill_gaussian*(1.0 - math.exp(-9.0*bin*bin/(range_gaussian*range_gaussian)))
 
 
+neighbour_points = [(235.0, 215.0), (240.0, 186.0), (129.0, 64.0)]
 
+A_matrix = []
+for point in neighbour_points:
+    row =[]
+    for other_point in neighbour_points:
+        dist = distance(point, other_point)
+        gamma = variogram(dist)
+        row.append(gamma)
+    A_matrix.append(row)
 
-
-
-
-
-
-
-ncols1 = math.ceil((max(x_list_points)-min(x_list_points))/cellsize)
-ncols = math.ceil((max(x_list_points)-min(x_list_points) + (0.5 * cellsize))/cellsize)
-print(ncols1)
-print(ncols)
-
-nrows1 = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
-nrows = math.ceil((max(y_list_points)-min(y_list_points) + (0.5 * cellsize))/cellsize)
-
-print(nrows1)
-print(nrows)
-
-#range_x1 = range(int(min(x_list_points)), int(ncols * cellsize + cellsize), int(cellsize))
-
-#range_x = range(int(min(x_list_points)), int(max(x_list_points) + cellsize), int(cellsize))
-#range_y = reversed(range(int(min(y_list_points)), int(max(y_list_points) + cellsize), int(cellsize)))
-
-
-# make x and y ranges for the x and y axes for the bbox
-# add 0.5 cellsize to find the centre points of the 
-range_y = reversed(numpy.arange(min(y_list_points) + 0.5 * cellsize, max(y_list_points)+ 0.5 * cellsize, cellsize)) 
-range_x = numpy.arange(min(x_list_points) + 0.5 * cellsize, max(x_list_points)+ 0.5 * cellsize, cellsize)
-
-#print(range_x1)
-#print(range_x)
-
-coordinate_lst = [[x, y] for y in range_y for x in range_x] # for ll of each cell or centerpoint??
-#print(coordinate_lst)
+print(A_matrix)

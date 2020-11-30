@@ -24,6 +24,12 @@ def distance(point_sample, point_raster):
     distance = math.sqrt(dx ** 2 + dy ** 2)
     return distance
 
+# theoretical variogram (gaussian)
+def variogram(distance):
+    return 2 + 1400*(1.0 - math.exp(-9.0 * distance * distance / (300*300)))
+    # nugget_gaussian+sill_gaussian*(1.0 - math.exp(-9.0*bin*bin/(range_gaussian*range_gaussian)))
+    
+
 def main():
     #-- read the needed parameters from the file 'params.json' (must be in same folder)
     try:
@@ -65,7 +71,7 @@ def main():
     # create the KDTree with the x and y values of the sample points 
     xy_list = list(zip(x_list_points, y_list_points))
     tree = scipy.spatial.KDTree(xy_list) 
-
+    print(xy_list)
     # calcalute number of rows and colums to wtrite in the asc file
     ncols = math.ceil((max(x_list_points)-min(x_list_points))/cellsize)
     nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
@@ -84,8 +90,32 @@ def main():
         '''
 
         # i_kriging list of indicies with points within radius
-        i_kriging = kd_tree.query_ball_point(raster_point, r)       
+        i_kriging = tree.query_ball_point(raster_point, r)       
 
         # return none value if no point is found within the radius
         if len(i_kriging) == 0:
             return -9999
+        
+        # make list containing all the sample points within the given radius
+        neighbour_points = []
+        for index in i_kriging:
+            neighbour_points.append(xy_list[index])
+        '''
+        # create A matrix (distance between sample points and their corresponding variogram value)
+        A_matrix = []
+        for point in neighbour_points:
+            row =[]
+            for other_point in neighbour_points:
+                dist = distance(point, other_point)
+                gamma = variogram(dist)
+                row.append(gamma)
+            A_matrix.append(row)
+            '''
+
+        
+
+
+
+if __name__ == '__main__':
+    main()
+    print('done')       
