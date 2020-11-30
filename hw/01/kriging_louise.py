@@ -22,7 +22,7 @@ def distance(point_sample, point_raster):
     return distance
 
 # function to remove dubble points in sample and return array of points (taken from variogram.py) 
-def remove_dubbles(points_list):
+def remove_doubles(points_list):
     clean_points_list = []
     for point1 in points_list:
         repeated = False
@@ -61,12 +61,12 @@ cellsize= j_kriging['cellsize']
 radius = j_kriging['radius']
 
 # set variables as found by variogram
-nugget = 0
+nugget = 2
 still = 1400
 range_kriging = 300
 
 #remove all double points from point list
-points_3d_array = remove_dubbles(list_pts_3d)
+points_3d_array = remove_doubles(list_pts_3d)
 
 # split the list of 3d sample points in lists for x, y and z 
 x_list_points, y_list_points, z_list_points = split_xyz(points_3d_array)
@@ -99,17 +99,40 @@ for raster_point in coordinate_lst:
     # find points in radius 
     else:
         i_krig = tree.query_ball_point(raster_point, radius)
-        
         d = []
-        A = numpy.zeros((len(i_krig)+1, len(i_krig)+1))
-        print(A.shape)
         for point_index in i_krig:
             raster_sample_dist = distance(raster_point, xy_list[point_index])
             gamma = gaussian(nugget, still, range_kriging, raster_sample_dist)
             d.append(gamma)
         d.append(1)
 
-        
+        print('d', d)
+
+        neighbour_points = []
+        for index in i_krig:
+            neighbour_points.append(xy_list[index])
+
+        # create A matrix (distance between sample points and their corresponding variogram value)
+        A = []
+        row_end = []
+        for point in neighbour_points:
+            row =[]
+            row_end.append(1)
+            for other_point in neighbour_points:
+                dist = distance(point, other_point)
+                gamma = gaussian(nugget, still, range_kriging, dist)
+                row.append(gamma)
+            row.append(1)
+            A.append(row)
+        row_end.append(0)
+        A.append(row_end)
+
+        A_matrix = numpy.array([numpy.array(row) for row in A])
+
+        print(A_matrix)
+        print(type(A_matrix))
+
+
 
 
 
