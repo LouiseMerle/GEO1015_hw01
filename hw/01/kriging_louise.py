@@ -106,7 +106,7 @@ for raster_point in coordinate_lst:
             d.append(gamma)
         d.append(1)
 
-        print('d', d)
+        d_vector = numpy.array(d)
 
         neighbour_points = []
         for index in i_krig:
