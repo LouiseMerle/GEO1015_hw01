@@ -262,11 +262,13 @@ def tin_interpolation(list_pts_3d, j_tin):
     # used for triangulation
     hull = scipy.spatial.Delaunay(xy_list)
     
-    # find 
+    # find simplex rasterpoint falls in
     for raster_point in coordinate_lst:
         simplex = hull.find_simplex(raster_point)
+        # find vertices of simplex
         vertices = hull.vertices[simplex]
 
+        # is not in convex hull, assing no data value
         if simplex == -1:
             raster_point.append(-9999)
         else: 
