@@ -1,21 +1,21 @@
 {
-  "input-file": "samples_Tasmania.xyz",
+  "input-file": "samples.xyz",
   "nn": {
-    "output-file": "nn_tas.asc",
+    "output-file": "nn_test.asc",
     "cellsize": 100
   },
   "idw": {
-    "output-file": "idw_tas.asc",
+    "output-file": "idw_test.asc",
     "cellsize": 100,
     "radius": 200,
     "power": 2
   },
   "tin": {
-    "output-file": "tin_tas.asc",
+    "output-file": "tin_test.asc",
     "cellsize": 100
   },
   "kriging": {
-    "output-file": "kriging.asc",
+    "output-file": "kriging_test.asc",
     "cellsize": 1.0,
     "radius": 15
   }
