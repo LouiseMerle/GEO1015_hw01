@@ -17,6 +17,6 @@
   "kriging": {
     "output-file": "kriging_test.asc",
     "cellsize": 10.0,
-    "radius": 15
+    "radius": 10
   }
 }

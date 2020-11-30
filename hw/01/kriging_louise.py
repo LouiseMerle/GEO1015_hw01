@@ -61,7 +61,7 @@ cellsize= j_kriging['cellsize']
 radius = j_kriging['radius']
 
 # set variables as found by variogram
-nugget = 2
+nugget = 0
 still = 1400
 range_kriging = 300
 
@@ -99,41 +99,90 @@ for raster_point in coordinate_lst:
     # find points in radius 
     else:
         i_krig = tree.query_ball_point(raster_point, radius)
-        d = []
-        for point_index in i_krig:
-            raster_sample_dist = distance(raster_point, xy_list[point_index])
-            gamma = gaussian(nugget, still, range_kriging, raster_sample_dist)
-            d.append(gamma)
-        d.append(1)
+        # if no values in search radius append no data value as z value to point 
+        if len(i_krig) == 0:
+            raster_point.append(-9999)
+        
+        else:
+            d = []
+            # creat matrix A to fill 
+            A = numpy.ones((len(i_krig)+1, len(i_krig)+1))
+            # fill lower right value of matrix with 0
+            A[len(i_krig)][len(i_krig)] = 0
+            row_nr = 0
+            col_nr = 0 
+            for point_index in i_krig:
+                # random code to keep the rest the same 
+                if len(d) > 10000000000:
+                    print('something went wrong')
+                # if sample point is on a raster point assign hight value of raster point
+                #if distance(xy_list[point_index], raster_point) == 0:
+                   # z_value = z_list_points[point_index]
+                    #raster_point.append(z_value)
+                    #print('point on raster point')
+                    #A = []
+                    #d = []
+                    #break
+                else: 
+                    # find values for vector d
+                    raster_sample_dist = distance(raster_point, xy_list[point_index])
+                    gamma = gaussian(nugget, still, range_kriging, raster_sample_dist)
+                    d.append(gamma)
+                    # find values for matrix A
+                    for other_point_index in i_krig:
+                        dist = distance(xy_list[point_index], xy_list[other_point_index])
+                        gamma = gaussian(nugget, still, range_kriging, dist)
+                        A[row_nr][col_nr] = gamma
+                        col_nr += 1 
+                        # check if end of column is reached, set writing to next line
+                        if col_nr == len(i_krig):
+                            row_nr += 1
+                            col_nr = 0
 
-        d_vector = numpy.array(d)
+            # append 1 to end of vector D 
+            d.append(1)
+            # cast to numpy array 
+            d_vector = numpy.array(d)
 
-        neighbour_points = []
-        for index in i_krig:
-            neighbour_points.append(xy_list[index])
+            # inverse matrix A 
+            A_inverse = numpy.linalg.inv(A)
 
-        # create A matrix (distance between sample points and their corresponding variogram value)
-        A = []
-        row_end = []
-        for point in neighbour_points:
-            row =[]
-            row_end.append(1)
-            for other_point in neighbour_points:
-                dist = distance(point, other_point)
-                gamma = gaussian(nugget, still, range_kriging, dist)
-                row.append(gamma)
-            row.append(1)
-            A.append(row)
-        row_end.append(0)
-        A.append(row_end)
+            # compute weights vector 
+            w = numpy.dot(A_inverse, d_vector)
+            print(w)
 
-        A_matrix = numpy.array([numpy.array(row) for row in A])
+            weight_index_lst = list(zip(w, i_krig))
+            z_value = 0
+            # calculate z value with weights 
+            for weight, index in weight_index_lst:
+                z_point = z_list_points[index] 
+                z_value += z_point * weight
 
-        print(A_matrix)
-        print(type(A_matrix))
+            raster_point.append(z_value)
+
+# count row and column numbers to write row by row in asc file 
+row_nr = 0
+col_nr = 0
+
+# open asc output file and write 
+with open(j_kriging['output-file'], 'w') as fh:
+    fh.write('NCOLS {}\n'.format(ncols))
+    fh.write('NROWS {}\n'.format(nrows))
+    fh.write('XLLCENTER {}\n'.format(min(x_list_points) + (0.5 * cellsize)))
+    fh.write('YLLCENTER {}\n'.format(min(y_list_points) + (0.5 * cellsize)))
+    fh.write('CELLSIZE {}\n'.format(j_kriging['cellsize']))
+    fh.write('NODATA_VALUE {}\n'.format(-9999))
+
+    # write z values in asc file jn
+    for point in coordinate_lst:
+        fh.write(str(point[-1])+' ')
+        col_nr += 1
+    
+        # print new line charater when nr of colls is reached and row is full
+        if col_nr == ncols:
+            col_nr = 0
+            row_nr += 1
+            fh.write('\n')
 
 
-
-
-
-
+           
