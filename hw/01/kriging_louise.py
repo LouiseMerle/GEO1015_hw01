@@ -112,17 +112,14 @@ for raster_point in coordinate_lst:
             row_nr = 0
             col_nr = 0 
             for point_index in i_krig:
-                # random code to keep the rest the same 
-                if len(d) > 10000000000:
-                    print('something went wrong')
                 # if sample point is on a raster point assign hight value of raster point
-                #if distance(xy_list[point_index], raster_point) == 0:
-                   # z_value = z_list_points[point_index]
-                    #raster_point.append(z_value)
-                    #print('point on raster point')
-                    #A = []
-                    #d = []
-                    #break
+                if distance(xy_list[point_index], raster_point) == 0:
+                    z_value = z_list_points[point_index]
+                    raster_point.append(z_value)
+                    print('point on raster point')
+                    A = []
+                    d = []
+                    break
                 else: 
                     # find values for vector d
                     raster_sample_dist = distance(raster_point, xy_list[point_index])
@@ -138,14 +135,15 @@ for raster_point in coordinate_lst:
                         if col_nr == len(i_krig):
                             row_nr += 1
                             col_nr = 0
-
-            # append 1 to end of vector D 
-            d.append(1)
-            # cast to numpy array 
-            d_vector = numpy.array(d)
+            if len(d) > 0:
+                # append 1 to end of vector D 
+                d.append(1)
+                # cast to numpy array 
+                d_vector = numpy.array(d)
 
             # inverse matrix A 
-            A_inverse = numpy.linalg.inv(A)
+            if A.shape[0] > 0:
+                A_inverse = numpy.linalg.inv(A)
 
             # compute weights vector 
             w = numpy.dot(A_inverse, d_vector)
