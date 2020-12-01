@@ -110,7 +110,8 @@ def nn_interpolation(list_pts_3d, j_nn):
     nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
     
     # make x and y ranges for the x and y axes for the bbox
-    # add 0.5 cellsize to find the centre points of the 
+    # add 0.5 cellsize to find the centre points of the cell
+    # reverse y write in asc file from top to bottom 
     range_y = reversed(numpy.arange(min(y_list_points) + 0.5 * cellsize, max(y_list_points)+ 0.5 * cellsize, cellsize)) 
     range_x = numpy.arange(min(x_list_points) + 0.5 * cellsize, max(x_list_points)+ 0.5 * cellsize, cellsize)
     
@@ -191,14 +192,13 @@ def idw_interpolation(list_pts_3d, j_idw):
     nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
     
     # make x and y ranges for the x and y axes for the bbox
-    # add 0.5 cellsize to find the centre points of the 
+    # add 0.5 cellsize to find the centre points of the cell
+    # reverse y write in asc file from top to bottom 
     range_y = reversed(numpy.arange(min(y_list_points) + 0.5 * cellsize, max(y_list_points)+ 0.5 * cellsize, cellsize)) 
     range_x = numpy.arange(min(x_list_points) + 0.5 * cellsize, max(x_list_points)+ 0.5 * cellsize, cellsize)
     
     # make list with all x y coordinates on the x and y axis of the raster
     coordinate_lst = [[x, y] for y in range_y for x in range_x]
-
-    raster_values = []
 
     # convex hull
     hull = scipy.spatial.Delaunay(xy_list)
@@ -269,7 +269,8 @@ def tin_interpolation(list_pts_3d, j_tin):
     nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
     
     # make x and y ranges for the x and y axes for the bbox
-    # add 0.5 cellsize to find the centre points of the 
+    # add 0.5 cellsize to find the centre points of the cell
+    # reverse y write in asc file from top to bottom 
     range_y = reversed(numpy.arange(min(y_list_points) + 0.5 * cellsize, max(y_list_points)+ 0.5 * cellsize, cellsize)) 
     range_x = numpy.arange(min(x_list_points) + 0.5 * cellsize, max(x_list_points)+ 0.5 * cellsize, cellsize)
     
@@ -311,11 +312,7 @@ def tin_interpolation(list_pts_3d, j_tin):
                 w1 = ((p2[1] - p3[1]) * (raster_point[0] - p3[0]) + (p3[0] - p2[0]) * (raster_point[1] - p3[1])) / ((p2[1] - p3[1]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[1] - p3[1]))
                 w2 = ((p3[1] - p1[1]) * (raster_point[0] - p3[0]) + (p1[0] - p3[0]) * (raster_point[1] - p3[1])) / ((p2[1] - p3[1]) * (p1[0] - p3[0]) + (p3[0] - p2[0]) * (p1[1] - p3[1]))
                 w3 = 1 - w1 - w2
-                '''
-                w1 =1 / distance(p1, raster_point)
-                w2 = 1 / distance(p2, raster_point)
-                w3 = 1 / distance(p3, raster_point)
-                '''
+
             # calculate z value 
             z_value = (w1 * z_list_points[vertices[0]] + w2 * z_list_points[vertices[1]] + w3 * z_list_points[vertices[2]]) / (w1 + w2 + w3)
 
@@ -387,7 +384,8 @@ def kriging_interpolation(list_pts_3d, j_kriging):
     nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
         
     # make x and y ranges for the x and y axes for the bbox
-    # add 0.5 cellsize to find the centre points of the 
+    # add 0.5 cellsize to find the centre points of the
+    # reverse y write in asc file from top to bottom 
     range_y = reversed(numpy.arange(min(y_list_points) + 0.5 * cellsize, max(y_list_points)+ 0.5 * cellsize, cellsize)) 
     range_x = numpy.arange(min(x_list_points) + 0.5 * cellsize, max(x_list_points)+ 0.5 * cellsize, cellsize)
         
@@ -419,17 +417,14 @@ def kriging_interpolation(list_pts_3d, j_kriging):
                 row_nr = 0
                 col_nr = 0 
                 for point_index in i_krig:
-                    # random code to keep the rest the same 
-                    if len(d) > 10000000000:
-                        print('something went wrong')
                     # if sample point is on a raster point assign hight value of raster point
-                    #if distance(xy_list[point_index], raster_point) == 0:
-                    # z_value = z_list_points[point_index]
-                        #raster_point.append(z_value)
-                        #print('point on raster point')
-                        #A = []
-                        #d = []
-                        #break
+                    if distance(xy_list[point_index], raster_point) == 0:
+                        z_value = z_list_points[point_index]
+                        raster_point.append(z_value)
+                        print('point on raster point')
+                        A = []
+                        d = []
+                        break
                     else: 
                         # find values for vector d
                         raster_sample_dist = distance(raster_point, xy_list[point_index])
@@ -445,19 +440,22 @@ def kriging_interpolation(list_pts_3d, j_kriging):
                             if col_nr == len(i_krig):
                                 row_nr += 1
                                 col_nr = 0
-
-                # append 1 to end of vector D 
-                d.append(1)
-                # cast to numpy array 
-                d_vector = numpy.array(d)
+                if len(d) > 0:
+                    # append 1 to end of vector D 
+                    d.append(1)
+                    # cast to numpy array 
+                    d_vector = numpy.array(d)
 
                 # inverse matrix A 
-                A_inverse = numpy.linalg.inv(A)
+                if A.shape[0] > 0:
+                    A_inverse = numpy.linalg.inv(A)
 
                 # compute weights vector 
-                w = numpy.dot(A_inverse, d_vector)
+                w = numpy.matmul(A_inverse,d)
+                # remove last element of the weights vector as this is μ(x0)
+                weights_vector = w[:-1]
 
-                weight_index_lst = list(zip(w, i_krig))
+                weight_index_lst = list(zip(weights_vector, i_krig))
                 z_value = 0
                 # calculate z value with weights 
                 for weight, index in weight_index_lst:
@@ -489,5 +487,5 @@ def kriging_interpolation(list_pts_3d, j_kriging):
                 col_nr = 0
                 row_nr += 1
                 fh.write('\n')
-    
-    print("File written to", j_kriging['output-file'])
+        
+        print("File written to", j_kriging['output-file'])

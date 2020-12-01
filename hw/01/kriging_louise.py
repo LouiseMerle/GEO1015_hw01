@@ -80,7 +80,8 @@ ncols = math.ceil((max(x_list_points)-min(x_list_points))/cellsize)
 nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
     
 # make x and y ranges for the x and y axes for the bbox
-# add 0.5 cellsize to find the centre points of the 
+# add 0.5 cellsize to find the centre points of the
+# reverse y write in asc file from top to bottom 
 range_y = reversed(numpy.arange(min(y_list_points) + 0.5 * cellsize, max(y_list_points)+ 0.5 * cellsize, cellsize)) 
 range_x = numpy.arange(min(x_list_points) + 0.5 * cellsize, max(x_list_points)+ 0.5 * cellsize, cellsize)
     
@@ -146,10 +147,11 @@ for raster_point in coordinate_lst:
                 A_inverse = numpy.linalg.inv(A)
 
             # compute weights vector 
-            w = numpy.dot(A_inverse, d_vector)
-            print(w)
+            w = numpy.matmul(A_inverse,d)
+            # remove last element of the weights vector as this is μ(x0)
+            weights_vector = w[:-1]
 
-            weight_index_lst = list(zip(w, i_krig))
+            weight_index_lst = list(zip(weights_vector, i_krig))
             z_value = 0
             # calculate z value with weights 
             for weight, index in weight_index_lst:
@@ -183,4 +185,4 @@ with open(j_kriging['output-file'], 'w') as fh:
             fh.write('\n')
 
 
-           
+print("File written to", j_kriging['output-file']) 
