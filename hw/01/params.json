@@ -7,7 +7,7 @@
   "idw": {
     "output-file": "idw.asc",
     "cellsize": 1,
-    "radius": 10,
+    "radius": 15,
     "power": 2
   },
   "tin": {
@@ -16,7 +16,7 @@
   },
   "kriging": {
     "output-file": "kriging.asc",
-    "cellsize": 1.0,
+    "cellsize": 1,
     "radius": 15
   }
 }

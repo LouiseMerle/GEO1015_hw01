@@ -418,28 +418,28 @@ def kriging_interpolation(list_pts_3d, j_kriging):
                 col_nr = 0 
                 for point_index in i_krig:
                     # if sample point is on a raster point assign hight value of raster point
-                    if distance(xy_list[point_index], raster_point) == 0:
-                        z_value = z_list_points[point_index]
-                        raster_point.append(z_value)
-                        print('point on raster point')
-                        A = []
-                        d = []
-                        break
-                    else: 
-                        # find values for vector d
-                        raster_sample_dist = distance(raster_point, xy_list[point_index])
-                        gamma = gaussian(nugget, still, range_kriging, raster_sample_dist)
-                        d.append(gamma)
-                        # find values for matrix A
-                        for other_point_index in i_krig:
-                            dist = distance(xy_list[point_index], xy_list[other_point_index])
-                            gamma = gaussian(nugget, still, range_kriging, dist)
-                            A[row_nr][col_nr] = gamma
-                            col_nr += 1 
-                            # check if end of column is reached, set writing to next line
-                            if col_nr == len(i_krig):
-                                row_nr += 1
-                                col_nr = 0
+                    #if distance(xy_list[point_index], raster_point) == 0:
+                      #  z_value = z_list_points[point_index]
+                      #  raster_point.append(z_value)
+                       # print('point on raster point')
+                      #  A = []
+                      #  d = []
+                      #  break
+                    #else: 
+                    # find values for vector d
+                    raster_sample_dist = distance(raster_point, xy_list[point_index])
+                    gamma = gaussian(nugget, still, range_kriging, raster_sample_dist)
+                    d.append(gamma)
+                    # find values for matrix A
+                    for other_point_index in i_krig:
+                        dist = distance(xy_list[point_index], xy_list[other_point_index])
+                        gamma = gaussian(nugget, still, range_kriging, dist)
+                        A[row_nr][col_nr] = gamma
+                        col_nr += 1 
+                        # check if end of column is reached, set writing to next line
+                        if col_nr == len(i_krig):
+                            row_nr += 1
+                            col_nr = 0
                 if len(d) > 0:
                     # append 1 to end of vector D 
                     d.append(1)
@@ -447,11 +447,10 @@ def kriging_interpolation(list_pts_3d, j_kriging):
                     d_vector = numpy.array(d)
 
                 # inverse matrix A 
-                if A.shape[0] > 0:
-                    A_inverse = numpy.linalg.inv(A)
+                A_inverse = numpy.linalg.inv(A)
 
                 # compute weights vector 
-                w = numpy.matmul(A_inverse,d)
+                w = numpy.dot(A_inverse,d)
                 # remove last element of the weights vector as this is μ(x0)
                 weights_vector = w[:-1]
 
@@ -462,8 +461,12 @@ def kriging_interpolation(list_pts_3d, j_kriging):
                     z_point = z_list_points[index] 
                     z_value += z_point * weight
 
-                raster_point.append(z_value)
-
+                # check if compute z value us realistic
+                if z_value >= min(z_list_points) and z_value <= max(z_list_points):
+                    raster_point.append(z_value)
+                # if z value lower than lowest z vlaue in the data set or higher than the highest z vlaue of the data set zet no data value 
+                else: 
+                    raster_point.append(-9999)
     # count row and column numbers to write row by row in asc file 
     row_nr = 0
     col_nr = 0
