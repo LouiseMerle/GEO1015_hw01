@@ -71,7 +71,7 @@ def main():
     # create the KDTree with the x and y values of the sample points 
     xy_list = list(zip(x_list_points, y_list_points))
     tree = scipy.spatial.KDTree(xy_list) 
-    print(xy_list)
+    
     # calcalute number of rows and colums to wtrite in the asc file
     ncols = math.ceil((max(x_list_points)-min(x_list_points))/cellsize)
     nrows = math.ceil((max(y_list_points)-min(y_list_points))/cellsize)
@@ -100,7 +100,7 @@ def main():
         neighbour_points = []
         for index in i_kriging:
             neighbour_points.append(xy_list[index])
-        '''
+        
         # create A matrix (distance between sample points and their corresponding variogram value)
         A_matrix = []
         for point in neighbour_points:
@@ -109,8 +109,10 @@ def main():
                 dist = distance(point, other_point)
                 gamma = variogram(dist)
                 row.append(gamma)
+            row.append(1)
             A_matrix.append(row)
-            '''
+        A_matrix.append()
+            
 
         
 

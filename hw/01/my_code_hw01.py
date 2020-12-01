@@ -1,9 +1,9 @@
 #-- my_code_hw01.py
 #-- hw01 GEO1015.2020
-#-- [YOUR NAME]
-#-- [YOUR STUDENT NUMBER] 
-#-- [YOUR NAME]
-#-- [YOUR STUDENT NUMBER] 
+#-- Carolin Bachert
+#-- 5382998
+#-- Louise Spekking
+#-- 4256778  
 
 
 #-- import outside the standard Python library are not allowed, just those:
@@ -27,15 +27,18 @@ def distance(point_sample, point_raster):
     distance = math.sqrt(dx ** 2 + dy ** 2)
     return distance
 
+# function to calculate the new height value at an unknown location
 def cellvalue_idw(raster_point, r, p, kd_tree, zip_list, z_list_points):               
     # raster point is centerpoint of cell
         
         # i_idw list of indicies with points within radius
         i_idw = kd_tree.query_ball_point(raster_point, r)       
 
+        # Assign no Data value if there is no sample point within radius
         if len(i_idw) == 0:
             return -9999
 
+        # calculate the weight that is assigned to each sample point within the search radius
         weight_list = []
         for i in i_idw:
             if distance(zip_list[i], raster_point) == 0:
@@ -46,14 +49,17 @@ def cellvalue_idw(raster_point, r, p, kd_tree, zip_list, z_list_points):
                 w_i = 1/d ** p
                 weight_list.append(w_i)
         
+        # create a list with the height values of the sample points within the search radius
         point_list = []
         for i in i_idw:
             point_list.append(z_list_points[i])
 
+        # get the value of the counter for the formula to calculate the new height value
         s = 0
         for num1, num2 in zip(weight_list, point_list):
             s += num1 * num2
 
+        # returns the new height value
         return(s/sum(weight_list))
 
 # function to remove dubble points in sample and return array of points (taken from variogram.py) 
@@ -123,6 +129,7 @@ def nn_interpolation(list_pts_3d, j_nn):
 
     # query the raster coordinates with the sample points 
     # append interpolated z value to list with x, y raster coordinates
+    # assign no Data value if cell center is outside convex hull 
     for query_point in coordinate_lst:
         if hull.find_simplex(query_point) == -1:
             query_point.append(-9999)
@@ -178,12 +185,15 @@ def idw_interpolation(list_pts_3d, j_idw):
     # kd = scipy.spatial.KDTree(list_pts)
     # i = kd.query_ball_point(p, radius)
 
+    # get cellsize, radius and power from j_params file
     cellsize= j_idw['cellsize']
     radius = j_idw['radius']
     power = j_idw['power']
 
+    # split the list of 3d sample points in lists for x, y and z 
     x_list_points, y_list_points, z_list_points = split_xyz(list_pts_3d)
     
+    # create the KDTree with the x and y values of the sample points
     xy_list = list(zip(x_list_points, y_list_points))
     tree = scipy.spatial.KDTree(xy_list)
 
@@ -203,16 +213,20 @@ def idw_interpolation(list_pts_3d, j_idw):
     # convex hull
     hull = scipy.spatial.Delaunay(xy_list)
 
-    # query the raster coordinates with the sample points 
+    # query the raster coordinates with the above function cellvalue_idw  
     # append interpolated z value to list with x, y raster coordinates
+    # assign no Data value if cell center is outside convex hull
     for point in coordinate_lst:
         if hull.find_simplex(point) == -1:
             point.append(-9999)
         else:
             point.append(cellvalue_idw(point, radius, power, tree, xy_list, z_list_points))
-        
+
+    # count row and column numbers to write row by row in asc file     
     row_nr = 0
     col_nr = 0
+
+    # open asc output file and write
     with open(j_idw['output-file'], 'w') as fh:
         fh.writelines('NCOLS {}\n'.format(ncols))
         fh.writelines('NROWS {}\n'.format(nrows))
@@ -221,10 +235,12 @@ def idw_interpolation(list_pts_3d, j_idw):
         fh.writelines('CELLSIZE {}\n'.format(j_idw['cellsize']))
         fh.writelines('NODATA_VALUE {}\n'.format(-9999))
         
+        # write z values in asc file
         for point in coordinate_lst:
             fh.write(str(point[-1])+' ')
             col_nr += 1
-        
+
+            # print new line charater when nr of colls is reached and row is full
             if col_nr == ncols:
                 col_nr = 0
                 row_nr += 1
